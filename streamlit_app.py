@@ -45,18 +45,18 @@ col_pipeline = ColumnTransformer(
 def getData():
     return pd.read_csv('vn_news_226_tdlfr.csv')
 
-
+@st.cache
 def getModel():
     mlp_model = joblib.load('mlp_model.sav')
     lr_model = joblib.load('lr_model.sav')
-    return mlp_model,lr_model
-
-def trainModel(model):
     data_df = getData()
     y_sr = data_df["label"]
     X_df = data_df.drop("label", axis=1)
-    model.fit(X_df,y_sr)
-    return model
+    mlp_model.fit(X_df,y_sr)
+    lr_model.fit(X_df,y_sr)
+    return mlp_model,lr_model
+
+
 st.set_page_config(page_title="Project03")
 
 st.title("Vietnamese Fake News Detector")
@@ -69,17 +69,17 @@ mlp_model,lr_model = getModel()
 
 left,right = st.columns(2)
 if left.button('Predict'):
-    train_model = None
+    model = None
     if model_select == 'MLP Classifier':
-        trainModel = trainModel(mlp_model)
+        model = mlp_model
     elif model_select == 'Logistic Regression':
-        trainModel = trainModel(lr_model)
+        model = lr_model
     if len(new) > 0 :
         obj = {
             "text":[new],
             "domain":[domain]
         }
-        result = trainModel.predict(pd.DataFrame.from_dict(obj))
+        result = model.predict(pd.DataFrame.from_dict(obj))
         if result[0] ==0:
             right.write("Real")
         elif result[0]==1:
